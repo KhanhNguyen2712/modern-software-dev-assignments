@@ -4,10 +4,11 @@ import asyncio
 
 import httpx
 from fastapi.testclient import TestClient
+from mcp.server.transport_security import TransportSecuritySettings
 
 from week3.server.core.config import GitHubOAuthConfig, HttpAuthConfig, WeatherSettings
 from week3.server.transports.github_oauth import GitHubOAuthClient
-from week3.server.transports.http_app import create_http_app
+from week3.server.transports.http_app import create_http_app, resolve_transport_security
 
 
 def test_github_authorize_url_contains_expected_parameters() -> None:
@@ -182,3 +183,13 @@ def test_mcp_endpoint_without_trailing_slash_does_not_redirect() -> None:
 
     assert response_without_slash.status_code not in {307, 308}
     assert response_without_slash.status_code == response_with_slash.status_code
+
+
+def test_resolve_transport_security_allows_remote_resource_server_host() -> None:
+    settings = resolve_transport_security("https://weather-mcp-week3.up.railway.app")
+
+    assert settings == TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=["weather-mcp-week3.up.railway.app", "weather-mcp-week3.up.railway.app:*"],
+        allowed_origins=["https://weather-mcp-week3.up.railway.app"],
+    )

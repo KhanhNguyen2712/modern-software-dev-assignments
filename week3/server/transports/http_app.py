@@ -5,9 +5,11 @@ import logging
 import os
 import uuid
 from collections.abc import AsyncIterator
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
+from mcp.server.transport_security import TransportSecuritySettings
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from week3.server.core import (
@@ -49,6 +51,27 @@ class NormalizeMcpPathMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+def resolve_transport_security(resource_server_url: str) -> TransportSecuritySettings | None:
+    parsed = urlparse(resource_server_url)
+    hostname = parsed.hostname
+    if not hostname:
+        return None
+    if hostname in {"127.0.0.1", "localhost", "::1"}:
+        return None
+
+    allowed_hosts = [hostname, f"{hostname}:*"]
+    origin = f"{parsed.scheme or 'https'}://{hostname}"
+    if parsed.port:
+        allowed_hosts.insert(1, f"{hostname}:{parsed.port}")
+        origin = f"{origin}:{parsed.port}"
+
+    return TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=allowed_hosts,
+        allowed_origins=[origin],
+    )
+
+
 def create_http_app(
     weather_settings: WeatherSettings | None = None,
     auth_config: HttpAuthConfig | None = None,
@@ -66,10 +89,13 @@ def create_http_app(
     github_oauth_client = github_client or (
         GitHubOAuthClient(github_config) if github_config.enabled else None
     )
+    parsed_resource_server_url = urlparse(auth_config.resource_server_url)
     bundle = create_weather_mcp_server(
         weather_service,
         name="Week3WeatherHTTP",
+        host=parsed_resource_server_url.hostname or "127.0.0.1",
         streamable_http_path="/",
+        transport_security=resolve_transport_security(auth_config.resource_server_url),
     )
 
     @contextlib.asynccontextmanager

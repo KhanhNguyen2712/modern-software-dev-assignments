@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Protocol
 
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from week3.server.core.models import WeatherReport, build_resource_text, build_tool_payload
 
@@ -33,13 +34,17 @@ def create_weather_mcp_server(
     weather_service: WeatherServiceProtocol,
     *,
     name: str = "Week3WeatherServer",
+    host: str = "127.0.0.1",
     streamable_http_path: str = "/",
+    transport_security: TransportSecuritySettings | None = None,
 ) -> WeatherMcpBundle:
     mcp = FastMCP(
         name=name,
+        host=host,
         stateless_http=True,
         json_response=True,
         streamable_http_path=streamable_http_path,
+        transport_security=transport_security,
     )
 
     tool_handlers: dict[str, Callable[..., Awaitable[dict[str, Any]]]] = {}
