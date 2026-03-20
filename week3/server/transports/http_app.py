@@ -7,7 +7,7 @@ import uuid
 from collections.abc import AsyncIterator
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from week3.server.core import (
@@ -98,8 +98,8 @@ def create_http_app(
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    @app.get("/auth/github/login")
-    async def github_login() -> RedirectResponse | JSONResponse:
+    @app.get("/auth/github/login", response_model=None)
+    async def github_login() -> Response:
         if github_oauth_client is None:
             return JSONResponse({"error": "GitHub OAuth is not configured"}, status_code=503)
         missing_settings = [
