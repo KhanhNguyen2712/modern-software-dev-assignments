@@ -41,6 +41,14 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class NormalizeMcpPathMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):  # type: ignore[override]
+        if request.scope["path"] == "/mcp":
+            request.scope["path"] = "/mcp/"
+            request.scope["raw_path"] = b"/mcp/"
+        return await call_next(request)
+
+
 def create_http_app(
     weather_settings: WeatherSettings | None = None,
     auth_config: HttpAuthConfig | None = None,
@@ -76,6 +84,7 @@ def create_http_app(
                     await github_oauth_client.aclose()
 
     app = FastAPI(title="Week 3 MCP Weather HTTP Server", lifespan=lifespan)
+    app.add_middleware(NormalizeMcpPathMiddleware)
     app.add_middleware(RequestIdMiddleware)
     if auth_config.required:
         app.add_middleware(
@@ -90,14 +99,31 @@ def create_http_app(
         return {"status": "ok"}
 
     @app.get("/auth/github/login")
-    async def github_login() -> RedirectResponse:
+    async def github_login() -> RedirectResponse | JSONResponse:
         if github_oauth_client is None:
-            return RedirectResponse(url="/health", status_code=307)
+            return JSONResponse({"error": "GitHub OAuth is not configured"}, status_code=503)
+        missing_settings = [
+            name
+            for name, value in (
+                ("GITHUB_CLIENT_ID", github_config.client_id),
+                ("GITHUB_REDIRECT_URI", github_config.redirect_uri),
+            )
+            if not value
+        ]
+        if missing_settings:
+            return JSONResponse(
+                {
+                    "error": "GitHub OAuth is missing required settings",
+                    "missing": missing_settings,
+                },
+                status_code=503,
+            )
         state = github_oauth_client.create_state()
-        response = RedirectResponse(
-            url=github_oauth_client.build_authorize_url(state),
-            status_code=307,
-        )
+        try:
+            authorize_url = github_oauth_client.build_authorize_url(state)
+        except AuthError as exc:
+            return JSONResponse({"error": str(exc)}, status_code=503)
+        response = RedirectResponse(url=authorize_url, status_code=307)
         response.set_cookie(
             "oauth_state",
             state,

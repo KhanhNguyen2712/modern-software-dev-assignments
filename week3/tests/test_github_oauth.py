@@ -133,3 +133,52 @@ def test_github_login_route_redirects_to_provider() -> None:
     assert response.status_code == 307
     assert response.headers["location"].startswith("https://github.com/login/oauth/authorize?")
     assert "oauth_state=" in response.headers["set-cookie"]
+
+
+def test_github_login_route_reports_when_oauth_disabled() -> None:
+    app = create_http_app(
+        weather_settings=WeatherSettings(),
+        auth_config=HttpAuthConfig(required=True, provider="github"),
+        github_config=GitHubOAuthConfig(enabled=False),
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/auth/github/login", follow_redirects=False)
+
+    assert response.status_code == 503
+    assert response.json()["error"] == "GitHub OAuth is not configured"
+
+
+def test_github_login_route_reports_missing_required_github_settings() -> None:
+    app = create_http_app(
+        weather_settings=WeatherSettings(),
+        auth_config=HttpAuthConfig(required=True, provider="github"),
+        github_config=GitHubOAuthConfig(
+            enabled=True,
+            client_id=None,
+            client_secret="github-client-secret",
+            redirect_uri=None,
+        ),
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/auth/github/login", follow_redirects=False)
+
+    assert response.status_code == 503
+    assert response.json()["error"] == "GitHub OAuth is missing required settings"
+    assert set(response.json()["missing"]) == {"GITHUB_CLIENT_ID", "GITHUB_REDIRECT_URI"}
+
+
+def test_mcp_endpoint_without_trailing_slash_does_not_redirect() -> None:
+    app = create_http_app(
+        weather_settings=WeatherSettings(),
+        auth_config=HttpAuthConfig(required=False, provider="github"),
+        github_config=GitHubOAuthConfig(enabled=False),
+    )
+
+    with TestClient(app) as client:
+        response_without_slash = client.get("/mcp", follow_redirects=False)
+        response_with_slash = client.get("/mcp/", follow_redirects=False)
+
+    assert response_without_slash.status_code not in {307, 308}
+    assert response_without_slash.status_code == response_with_slash.status_code
