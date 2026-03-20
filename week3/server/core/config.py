@@ -1,9 +1,18 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Self
 
 from pydantic import BaseModel, Field, field_validator
+from dotenv import load_dotenv
+
+
+REPO_ROOT_ENV = Path(__file__).resolve().parents[3] / ".env"
+WEEK3_ENV = Path(__file__).resolve().parents[2] / ".env"
+
+load_dotenv(REPO_ROOT_ENV, override=False)
+load_dotenv(WEEK3_ENV, override=True)
 
 
 def _parse_bool(value: str | None, default: bool = False) -> bool:

@@ -38,7 +38,24 @@ This week implements a Python MCP server that wraps the Open-Meteo APIs. It expo
 poetry install
 ```
 
+3. For local development, copy `week3/.env.example` to `week3/.env` and fill in the GitHub OAuth values you actually use.
+
+The app now auto-loads environment variables from:
+
+- repo root `.env`
+- `week3/.env`
+
+If the same key exists in both places, `week3/.env` wins.
+
 ## Environment Variables
+
+For local development, the easiest path is:
+
+```bash
+cp week3/.env.example week3/.env
+```
+
+Then edit `week3/.env`.
 
 ### Core weather settings
 
@@ -216,6 +233,8 @@ GITHUB_CLIENT_ID=...
 GITHUB_CLIENT_SECRET=...
 GITHUB_REDIRECT_URI=https://your-railway-domain.up.railway.app/auth/github/callback
 ```
+
+Railway injects these as real environment variables at runtime, so it does not need `week3/.env`.
 
 4. In GitHub OAuth App settings, add the same callback URL.
 5. Generate a Railway public domain.
