@@ -12,7 +12,7 @@ This week implements a Python MCP server that wraps the Open-Meteo APIs. It expo
 - `get_current_weather` tool for current conditions.
 - `get_forecast` tool for multi-day forecasts.
 - `weather://current/{location}` resource template.
-- `weather://forecast/{location}?days={days}` resource template.
+- `weather://forecast/{location}/{days}` resource template.
 - `weather_trip_brief` prompt for travel/outdoor planning.
 - Graceful errors for invalid locations, empty results, timeouts, rate limits, and upstream failures.
 - STDIO-safe logging to `stderr`.
@@ -151,7 +151,7 @@ After restarting Claude Desktop, you can type prompts such as:
 
 - `Use get_current_weather for Ho Chi Minh City in metric units.`
 - `Use get_forecast for Da Nang for 3 days.`
-- `Read the weather://forecast/Da Nang?days=2 resource.`
+- `Read the weather://forecast/Da Nang/2 resource.`
 - `Use the weather_trip_brief prompt for Hoi An for 2 days.`
 
 ## Run The Remote HTTP Server
@@ -333,7 +333,7 @@ https://your-railway-domain.up.railway.app/mcp
 
 - `weather://current/{location}`
   Returns a text rendering of current weather for the resolved location.
-- `weather://forecast/{location}?days={days}`
+- `weather://forecast/{location}/{days}`
   Returns a text rendering of the forecast with day-by-day details.
 
 ## Prompt Reference

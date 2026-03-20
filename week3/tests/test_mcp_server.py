@@ -66,7 +66,7 @@ def test_create_weather_mcp_server_exposes_expected_capabilities() -> None:
     assert bundle.tool_names == ("get_current_weather", "get_forecast")
     assert bundle.resource_templates == (
         "weather://current/{location}",
-        "weather://forecast/{location}?days={days}",
+        "weather://forecast/{location}/{days}",
     )
     assert bundle.prompt_names == ("weather_trip_brief",)
 

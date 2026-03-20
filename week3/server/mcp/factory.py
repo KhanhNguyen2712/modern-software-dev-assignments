@@ -73,12 +73,12 @@ def create_weather_mcp_server(
 
     resource_handlers["weather://current/{location}"] = current_weather_resource
 
-    @mcp.resource("weather://forecast/{location}?days={days}")
+    @mcp.resource("weather://forecast/{location}/{days}")
     async def forecast_weather_resource(location: str, days: int = 3) -> str:
         report = await weather_service.get_forecast(location, days=days)
         return build_resource_text(report)
 
-    resource_handlers["weather://forecast/{location}?days={days}"] = forecast_weather_resource
+    resource_handlers["weather://forecast/{location}/{days}"] = forecast_weather_resource
 
     @mcp.prompt()
     def weather_trip_brief(location: str, days: int = 3, units: str = "metric") -> str:
@@ -95,7 +95,7 @@ def create_weather_mcp_server(
         tool_names=("get_current_weather", "get_forecast"),
         resource_templates=(
             "weather://current/{location}",
-            "weather://forecast/{location}?days={days}",
+            "weather://forecast/{location}/{days}",
         ),
         prompt_names=("weather_trip_brief",),
         tool_handlers=tool_handlers,
