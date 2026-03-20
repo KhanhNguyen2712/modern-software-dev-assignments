@@ -8,6 +8,7 @@ import pytest
 from week3.server.core.client import OpenMeteoClient
 from week3.server.core.config import WeatherSettings
 from week3.server.core.errors import LocationNotFoundError, RateLimitError, UpstreamTimeoutError
+from week3.server.core.models import ForecastRequest, WeatherRequest
 from week3.server.core.service import WeatherService
 
 
@@ -137,3 +138,35 @@ def test_timeout_error_is_exposed_cleanly() -> None:
 
     with pytest.raises(UpstreamTimeoutError, match="timed out"):
         asyncio.run(service.get_current_weather("Da Nang"))
+
+
+@pytest.mark.parametrize(
+    ("raw_location", "expected"),
+    [
+        (" Ho Chi Minh City ", "Ho Chi Minh City"),
+        ("Ho-Chi-Minh-City", "Ho Chi Minh City"),
+        ("Ho_Chi_Minh_City", "Ho Chi Minh City"),
+        ("Ho+Chi+Minh+City", "Ho Chi Minh City"),
+        ("Ho%20Chi%20Minh%20City", "Ho Chi Minh City"),
+        ("District%201%20Ho-Chi-Minh-City?", "District 1 Ho Chi Minh City"),
+    ],
+)
+def test_weather_request_normalizes_multi_word_locations(
+    raw_location: str, expected: str
+) -> None:
+    request = WeatherRequest(location=raw_location)
+
+    assert request.location == expected
+
+
+def test_forecast_request_reuses_location_normalization() -> None:
+    request = ForecastRequest(location="Ho+Chi+Minh+City", days=3)
+
+    assert request.location == "Ho Chi Minh City"
+
+
+@pytest.mark.parametrize("raw_location", ["Hochiminh", "HCMC", "Saigon"])
+def test_weather_request_does_not_expand_aliases(raw_location: str) -> None:
+    request = WeatherRequest(location=raw_location)
+
+    assert request.location == raw_location

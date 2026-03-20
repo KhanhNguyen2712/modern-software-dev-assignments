@@ -336,6 +336,8 @@ https://your-railway-domain.up.railway.app/mcp
 - `weather://forecast/{location}/{days}`
   Returns a text rendering of the forecast with day-by-day details.
 
+Location values are normalized before geocoding, so multi-word cities can be supplied as plain text or path-safe variants such as `Ho Chi Minh City`, `Ho-Chi-Minh-City`, `Ho_Chi_Minh_City`, `Ho+Chi+Minh+City`, or `Ho%20Chi%20Minh%20City`. The server does not expand city aliases automatically.
+
 ## Prompt Reference
 
 - `weather_trip_brief(location, days=3, units="metric")`

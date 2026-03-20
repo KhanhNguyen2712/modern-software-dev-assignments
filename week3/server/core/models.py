@@ -1,10 +1,24 @@
 from __future__ import annotations
 
+import re
 from typing import Literal
+from urllib.parse import unquote
 
 from pydantic import BaseModel, Field, field_validator
 
 Units = Literal["metric", "imperial"]
+
+
+def normalize_location(value: str) -> str:
+    normalized = unquote(value.strip())
+    normalized = normalized.replace("+", " ")
+    normalized = re.sub(r"[_-]+", " ", normalized)
+    normalized = re.sub(r"([a-z])([A-Z])", r"\1 \2", normalized)
+    normalized = normalized.strip(" \t\r\n,;:!?/")
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    if not normalized:
+        raise ValueError("location is required")
+    return normalized
 
 
 class WeatherRequest(BaseModel):
@@ -14,10 +28,7 @@ class WeatherRequest(BaseModel):
     @field_validator("location")
     @classmethod
     def validate_location(cls, value: str) -> str:
-        normalized = value.strip()
-        if not normalized:
-            raise ValueError("location is required")
-        return normalized
+        return normalize_location(value)
 
 
 class ForecastRequest(WeatherRequest):
