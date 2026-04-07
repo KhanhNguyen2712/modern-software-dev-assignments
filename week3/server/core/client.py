@@ -126,7 +126,7 @@ class OpenMeteoClient:
                     )
             except httpx.RequestError as exc:
                 last_error = UpstreamServiceError(f"weather provider request failed: {exc}")
-
+        
             if attempt + 1 < attempts:
                 await asyncio.sleep(self.settings.backoff_seconds * (2**attempt))
 

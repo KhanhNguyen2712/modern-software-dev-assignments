@@ -15,6 +15,7 @@ if str(SERVER_ROOT) not in sys.path:
 from core import OpenMeteoClient, WeatherService, WeatherServiceError
 from core.models import build_tool_payload
 
+WeatherUnits = Literal["metric", "imperial"]
 
 @asynccontextmanager
 async def weather_lifespan(_: FastMCP):
@@ -36,6 +37,7 @@ def _service_from_context(ctx: Context) -> WeatherService:
 	return service
 
 
+
 @mcp.tool
 async def get_current_weather(
 	location: str,
@@ -53,7 +55,37 @@ async def get_current_weather(
 		return {"error": str(exc), "location": location, "units": units}
 	return build_tool_payload(report)
 
+@mcp.tool
+async def get_weather_forecast(
+	location: str,
+	days: int = 3,
+	units: Literal["metric", "imperial"] = "metric",
+	ctx: Context = None,
+) -> dict[str, object]:
+	"""Return a multi-day weather forecast for a location."""
+	if ctx is None:  # pragma: no cover
+		raise RuntimeError("tool context is required")
 
+	service = _service_from_context(ctx)
+	try:
+		report = await service.get_forecast(
+			location=location,
+			days=days,
+			units=units,
+		)
+	except WeatherServiceError as exc:
+		return {
+			"error": str(exc),
+			"location": location,
+			"days": days,
+			"units": units,
+		}
+	return build_tool_payload(report)
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(_: object):
+    from starlette.responses import JSONResponse
+    return JSONResponse({"status": "ok", "service": "weather-mcp-remote"})
 
 
 if __name__ == "__main__":
