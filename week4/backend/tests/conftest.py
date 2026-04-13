@@ -1,11 +1,15 @@
 import os
+import sys
 import tempfile
 from collections.abc import Generator
 
+# Add parent directory to Python path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 import pytest
-from backend.app.db import get_db
-from backend.app.main import app
-from backend.app.models import Base
+from app.db import get_db
+from app.main import app
+from app.models import Base
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
