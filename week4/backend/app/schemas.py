@@ -15,6 +15,11 @@ class NoteRead(BaseModel):
         from_attributes = True
 
 
+class NoteUpdate(BaseModel):
+    title: str
+    content: str
+
+
 class ActionItemCreate(BaseModel):
     description: str
 
