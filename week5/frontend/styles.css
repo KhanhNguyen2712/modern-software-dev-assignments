@@ -9,3 +9,5 @@ ul{list-style:disc;padding-left:1.25rem}
 #notes li, #actions li{margin-bottom:.5rem}
 #notes button, #actions button{margin-left:.5rem}
 #notes-status{min-height:1.2rem;color:#8a2c2c;font-size:.95rem}
+#tag-filters{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0}
+.tag-chip{display:inline-flex;align-items:center;padding:.15rem .55rem;border-radius:999px;background:#ece8d9;border:1px solid #d6cfb5;font-size:.85rem;margin-left:.35rem}

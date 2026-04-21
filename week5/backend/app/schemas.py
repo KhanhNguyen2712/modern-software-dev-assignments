@@ -17,6 +17,13 @@ class NoteCreate(BaseModel):
     content: NonEmptyContent
 
 
+class TagRead(BaseModel):
+    id: int
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class NoteUpdate(BaseModel):
     title: NonEmptyTitle
     content: NonEmptyContent
@@ -26,6 +33,7 @@ class NoteRead(BaseModel):
     id: int
     title: str
     content: str
+    tags: list[TagRead] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -36,6 +44,14 @@ class ActionItemCreate(BaseModel):
 
 class BulkCompleteRequest(BaseModel):
     ids: list[int]
+
+
+class TagCreate(BaseModel):
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
+
+
+class NoteTagAttach(BaseModel):
+    tag_id: int
 
 
 class ActionItemRead(BaseModel):
@@ -71,3 +87,9 @@ class PaginatedData(BaseModel, Generic[T]):
 class DeleteResult(BaseModel):
     deleted: Literal[True]
     id: int
+
+
+class DetachResult(BaseModel):
+    detached: Literal[True]
+    note_id: int
+    tag_id: int

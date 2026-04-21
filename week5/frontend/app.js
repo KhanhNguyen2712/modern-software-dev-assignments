@@ -13,6 +13,7 @@ let notesPageSize = 5;
 let notesTotal = 0;
 let noteSearchQuery = '';
 let noteSort = 'created_desc';
+let noteTagFilter = null;
 let actionFilter = null;
 let selectedActionIds = new Set();
 
@@ -27,6 +28,13 @@ function renderNotes() {
   for (const note of notesState) {
     const li = document.createElement('li');
     li.textContent = `${note.title}: ${note.content}`;
+
+    for (const tag of note.tags || []) {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.textContent = `#${tag.name}`;
+      li.appendChild(chip);
+    }
 
     const editBtn = document.createElement('button');
     editBtn.textContent = 'Edit';
@@ -84,6 +92,9 @@ async function loadNotes() {
   if (noteSearchQuery) {
     url.searchParams.set('q', noteSearchQuery);
   }
+  if (noteTagFilter !== null) {
+    url.searchParams.set('tag_id', String(noteTagFilter));
+  }
   url.searchParams.set('page', String(notesPage));
   url.searchParams.set('page_size', String(notesPageSize));
   url.searchParams.set('sort', noteSort);
@@ -93,6 +104,34 @@ async function loadNotes() {
   notesTotal = pageData.total;
   notesStatusMessage = '';
   renderNotes();
+}
+
+async function loadTags() {
+  const tags = await fetchJSON('/tags/');
+  const filters = document.getElementById('tag-filters');
+  filters.innerHTML = '';
+
+  const allBtn = document.createElement('button');
+  allBtn.type = 'button';
+  allBtn.textContent = 'All tags';
+  allBtn.onclick = async () => {
+    noteTagFilter = null;
+    notesPage = 1;
+    await loadNotes();
+  };
+  filters.appendChild(allBtn);
+
+  for (const tag of tags) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = `#${tag.name}`;
+    button.onclick = async () => {
+      noteTagFilter = tag.id;
+      notesPage = 1;
+      await loadNotes();
+    };
+    filters.appendChild(button);
+  }
 }
 
 async function loadActions() {
@@ -181,6 +220,20 @@ window.addEventListener('DOMContentLoaded', () => {
     loadActions();
   });
 
+  document.getElementById('tag-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('tag-name').value.trim();
+    if (!name) return;
+
+    await fetchJSON('/tags/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    e.target.reset();
+    await loadTags();
+  });
+
   document.getElementById('actions-filter-all').onclick = async () => {
     actionFilter = null;
     await loadActions();
@@ -208,5 +261,6 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   loadNotes();
+  loadTags();
   loadActions();
 });
