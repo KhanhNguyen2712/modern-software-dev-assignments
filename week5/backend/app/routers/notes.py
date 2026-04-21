@@ -1,33 +1,32 @@
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import Note
-from ..schemas import NoteCreate, NoteRead
+from ..responses import success_response
+from ..schemas import NoteCreate, NoteRead, SuccessEnvelope
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
 
-@router.get("/", response_model=list[NoteRead])
-def list_notes(db: Session = Depends(get_db)) -> list[NoteRead]:
+@router.get("/", response_model=SuccessEnvelope[list[NoteRead]])
+def list_notes(db: Session = Depends(get_db)):
     rows = db.execute(select(Note)).scalars().all()
-    return [NoteRead.model_validate(row) for row in rows]
+    return success_response([NoteRead.model_validate(row).model_dump(mode="json") for row in rows])
 
 
-@router.post("/", response_model=NoteRead, status_code=201)
-def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
+@router.post("/", response_model=SuccessEnvelope[NoteRead], status_code=201)
+def create_note(payload: NoteCreate, db: Session = Depends(get_db)):
     note = Note(title=payload.title, content=payload.content)
     db.add(note)
     db.flush()
     db.refresh(note)
-    return NoteRead.model_validate(note)
+    return success_response(NoteRead.model_validate(note).model_dump(mode="json"), status_code=201)
 
 
-@router.get("/search/", response_model=list[NoteRead])
-def search_notes(q: Optional[str] = None, db: Session = Depends(get_db)) -> list[NoteRead]:
+@router.get("/search/", response_model=SuccessEnvelope[list[NoteRead]])
+def search_notes(q: str | None = None, db: Session = Depends(get_db)):
     if not q:
         rows = db.execute(select(Note)).scalars().all()
     else:
@@ -36,12 +35,12 @@ def search_notes(q: Optional[str] = None, db: Session = Depends(get_db)) -> list
             .scalars()
             .all()
         )
-    return [NoteRead.model_validate(row) for row in rows]
+    return success_response([NoteRead.model_validate(row).model_dump(mode="json") for row in rows])
 
 
-@router.get("/{note_id}", response_model=NoteRead)
-def get_note(note_id: int, db: Session = Depends(get_db)) -> NoteRead:
+@router.get("/{note_id}", response_model=SuccessEnvelope[NoteRead])
+def get_note(note_id: int, db: Session = Depends(get_db)):
     note = db.get(Note, note_id)
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
-    return NoteRead.model_validate(note)
+    return success_response(NoteRead.model_validate(note).model_dump(mode="json"))

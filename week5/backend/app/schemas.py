@@ -1,9 +1,20 @@
-from pydantic import BaseModel
+from typing import Annotated, Generic, Literal, TypeVar
+
+from pydantic import BaseModel, ConfigDict, StringConstraints
+
+T = TypeVar("T")
+
+NonEmptyTitle = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+NonEmptyContent = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=5000)]
+NonEmptyDescription = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=500),
+]
 
 
 class NoteCreate(BaseModel):
-    title: str
-    content: str
+    title: NonEmptyTitle
+    content: NonEmptyContent
 
 
 class NoteRead(BaseModel):
@@ -11,12 +22,11 @@ class NoteRead(BaseModel):
     title: str
     content: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ActionItemCreate(BaseModel):
-    description: str
+    description: NonEmptyDescription
 
 
 class ActionItemRead(BaseModel):
@@ -24,5 +34,19 @@ class ActionItemRead(BaseModel):
     description: str
     completed: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ErrorInfo(BaseModel):
+    code: str
+    message: str
+
+
+class ErrorEnvelope(BaseModel):
+    ok: Literal[False] = False
+    error: ErrorInfo
+
+
+class SuccessEnvelope(BaseModel, Generic[T]):
+    ok: Literal[True] = True
+    data: T
