@@ -5,7 +5,7 @@ from sqlalchemy import desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import Note, Tag
+from ..models import ActionItem, Note, Tag
 from ..responses import success_response
 from ..schemas import (
     DeleteResult,
@@ -17,6 +17,7 @@ from ..schemas import (
     PaginatedData,
     SuccessEnvelope,
 )
+from ..services.extract import extract_action_items, extract_tags
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
@@ -150,3 +151,44 @@ def detach_tag_from_note(note_id: int, tag_id: int, db: Session = Depends(get_db
     db.flush()
     db.refresh(note)
     return success_response({"detached": True, "note_id": note_id, "tag_id": tag_id})
+
+
+@router.post("/{note_id}/extract", response_model=SuccessEnvelope[dict[str, object]])
+def extract_note_content(note_id: int, apply: bool = False, db: Session = Depends(get_db)):
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    tags = extract_tags(note.content)
+    action_items = extract_action_items(note.content)
+
+    if apply:
+        existing_tags = {
+            tag.name: tag for tag in db.execute(select(Tag).where(Tag.name.in_(tags))).scalars().all()
+        }
+        for name in tags:
+            tag = existing_tags.get(name)
+            if tag is None:
+                tag = Tag(name=name)
+                db.add(tag)
+                db.flush()
+                db.refresh(tag)
+                existing_tags[name] = tag
+            if all(existing.id != tag.id for existing in note.tags):
+                note.tags.append(tag)
+
+        for description in action_items:
+            db.add(ActionItem(description=description, completed=False))
+
+        db.add(note)
+        db.flush()
+        db.refresh(note)
+
+    return success_response(
+        {
+            "note_id": note_id,
+            "tags": tags,
+            "action_items": action_items,
+            "applied": apply,
+        }
+    )
