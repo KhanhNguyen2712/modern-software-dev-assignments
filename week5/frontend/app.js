@@ -8,6 +8,8 @@ async function fetchJSON(url, options) {
 
 let notesState = [];
 let notesStatusMessage = '';
+let actionFilter = null;
+let selectedActionIds = new Set();
 
 function renderNotes() {
   const list = document.getElementById('notes');
@@ -80,10 +82,29 @@ async function loadNotes() {
 async function loadActions() {
   const list = document.getElementById('actions');
   list.innerHTML = '';
-  const itemsPage = await fetchJSON('/action-items/');
+  const url = new URL('/action-items/', window.location.origin);
+  if (actionFilter !== null) {
+    url.searchParams.set('completed', String(actionFilter));
+  }
+  const itemsPage = await fetchJSON(url.pathname + url.search);
   for (const a of itemsPage.items) {
     const li = document.createElement('li');
-    li.textContent = `${a.description} [${a.completed ? 'done' : 'open'}]`;
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = selectedActionIds.has(a.id);
+    checkbox.onchange = () => {
+      if (checkbox.checked) {
+        selectedActionIds.add(a.id);
+      } else {
+        selectedActionIds.delete(a.id);
+      }
+    };
+    li.appendChild(checkbox);
+
+    const label = document.createElement('span');
+    label.textContent = `${a.description} [${a.completed ? 'done' : 'open'}]`;
+    li.appendChild(label);
+
     if (!a.completed) {
       const btn = document.createElement('button');
       btn.textContent = 'Complete';
@@ -122,6 +143,32 @@ window.addEventListener('DOMContentLoaded', () => {
     e.target.reset();
     loadActions();
   });
+
+  document.getElementById('actions-filter-all').onclick = async () => {
+    actionFilter = null;
+    await loadActions();
+  };
+
+  document.getElementById('actions-filter-open').onclick = async () => {
+    actionFilter = false;
+    await loadActions();
+  };
+
+  document.getElementById('actions-filter-done').onclick = async () => {
+    actionFilter = true;
+    await loadActions();
+  };
+
+  document.getElementById('actions-bulk-complete').onclick = async () => {
+    if (selectedActionIds.size === 0) return;
+    await fetchJSON('/action-items/bulk-complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: Array.from(selectedActionIds) }),
+    });
+    selectedActionIds = new Set();
+    loadActions();
+  };
 
   loadNotes();
   loadActions();

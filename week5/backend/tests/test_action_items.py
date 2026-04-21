@@ -59,3 +59,45 @@ def test_action_items_list_rejects_too_large_page_size(client):
     body = response.json()
     assert body["ok"] is False
     assert body["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_action_items_can_be_filtered_by_completed_state(client):
+    first = client.post("/action-items/", json={"description": "Open"}).json()["data"]
+    second = client.post("/action-items/", json={"description": "Done"}).json()["data"]
+    client.put(f"/action-items/{second['id']}/complete")
+
+    open_items = client.get("/action-items/", params={"completed": "false"}).json()["data"]["items"]
+    done_items = client.get("/action-items/", params={"completed": "true"}).json()["data"]["items"]
+
+    assert [item["id"] for item in open_items] == [first["id"]]
+    assert [item["id"] for item in done_items] == [second["id"]]
+
+
+def test_bulk_complete_marks_multiple_items_done(client):
+    first = client.post("/action-items/", json={"description": "One"}).json()["data"]
+    second = client.post("/action-items/", json={"description": "Two"}).json()["data"]
+
+    response = client.post(
+        "/action-items/bulk-complete",
+        json={"ids": [first["id"], second["id"]]},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert sorted(item["id"] for item in body["data"]["items"]) == [first["id"], second["id"]]
+    assert all(item["completed"] is True for item in body["data"]["items"])
+
+
+def test_bulk_complete_rolls_back_when_any_id_is_missing(client):
+    first = client.post("/action-items/", json={"description": "One"}).json()["data"]
+    second = client.post("/action-items/", json={"description": "Two"}).json()["data"]
+
+    response = client.post("/action-items/bulk-complete", json={"ids": [first["id"], 999]})
+
+    assert response.status_code == 404
+
+    items = client.get("/action-items/").json()["data"]["items"]
+    status_by_id = {item["id"]: item["completed"] for item in items}
+    assert status_by_id[first["id"]] is False
+    assert status_by_id[second["id"]] is False

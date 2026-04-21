@@ -34,6 +34,10 @@ class ActionItemCreate(BaseModel):
     description: NonEmptyDescription
 
 
+class BulkCompleteRequest(BaseModel):
+    ids: list[int]
+
+
 class ActionItemRead(BaseModel):
     id: int
     description: str
