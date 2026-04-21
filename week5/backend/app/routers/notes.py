@@ -1,19 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import Note
 from ..responses import success_response
-from ..schemas import NoteCreate, NoteRead, SuccessEnvelope
+from ..schemas import NoteCreate, NoteRead, PaginatedData, SuccessEnvelope
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
 
-@router.get("/", response_model=SuccessEnvelope[list[NoteRead]])
-def list_notes(db: Session = Depends(get_db)):
-    rows = db.execute(select(Note)).scalars().all()
-    return success_response([NoteRead.model_validate(row).model_dump(mode="json") for row in rows])
+@router.get("/", response_model=SuccessEnvelope[PaginatedData[NoteRead]])
+def list_notes(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    total = db.scalar(select(func.count()).select_from(Note)) or 0
+    offset = (page - 1) * page_size
+    rows = db.execute(select(Note).offset(offset).limit(page_size)).scalars().all()
+    items = [NoteRead.model_validate(row).model_dump(mode="json") for row in rows]
+    return success_response({"items": items, "total": total, "page": page, "page_size": page_size})
 
 
 @router.post("/", response_model=SuccessEnvelope[NoteRead], status_code=201)

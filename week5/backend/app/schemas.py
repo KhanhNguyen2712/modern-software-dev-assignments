@@ -50,3 +50,10 @@ class ErrorEnvelope(BaseModel):
 class SuccessEnvelope(BaseModel, Generic[T]):
     ok: Literal[True] = True
     data: T
+
+
+class PaginatedData(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+    page: int
+    page_size: int
