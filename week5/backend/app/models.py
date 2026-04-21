@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table, Text
+from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String, Table, Text
 from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
@@ -9,13 +9,15 @@ note_tags = Table(
     Column("note_id", ForeignKey("notes.id", ondelete="CASCADE"), primary_key=True),
     Column("tag_id", ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True),
 )
+Index("ix_note_tags_note_id", note_tags.c.note_id)
+Index("ix_note_tags_tag_id", note_tags.c.tag_id)
 
 
 class Note(Base):
     __tablename__ = "notes"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(200), nullable=False)
+    title = Column(String(200), nullable=False, index=True)
     content = Column(Text, nullable=False)
     tags = relationship("Tag", secondary=note_tags, back_populates="notes")
 
