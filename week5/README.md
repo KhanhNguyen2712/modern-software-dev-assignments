@@ -57,3 +57,36 @@ cd week5 && make lint
 ## Configuration
 
 Copy `.env.example` to `.env` (in `week5/`) to override defaults like the database path.
+
+## Deploy on Vercel
+
+This repo now includes a Vercel setup for a static React frontend plus a Python FastAPI function.
+
+### Files
+
+- `frontend/package.json` and `frontend/vite.config.js`
+- `api/index.py`
+- `vercel.json`
+- `requirements.txt`
+
+### Recommended Vercel project settings
+
+1. Set the project root to `week5/`.
+2. Leave build settings to the repo config in `vercel.json`.
+3. Set `VITE_API_BASE_URL=/api` if you are deploying the frontend and FastAPI function in the same Vercel project.
+4. If the frontend talks to an external backend instead, set `VITE_API_BASE_URL` to the full backend URL and configure:
+   - `VERCEL_FRONTEND_ORIGIN=https://<your-frontend-domain>`
+   - or `CORS_ORIGINS=https://<your-frontend-domain>`
+
+### Build and local verification
+
+```bash
+cd week5/frontend && npm install
+cd week5/frontend && npm run build
+cd week5 && conda run -n cs146s make test
+```
+
+### Rollback
+
+- In the Vercel dashboard, promote the previous successful deployment.
+- If you changed environment variables, restore the previous values and redeploy.

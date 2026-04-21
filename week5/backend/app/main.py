@@ -1,8 +1,10 @@
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -25,6 +27,26 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="Modern Software Dev Starter (Week 5)", lifespan=lifespan)
 app.mount("/assets", StaticFiles(directory="frontend/dist/assets", check_dir=False), name="assets")
+
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:8000,http://localhost:8000",
+    ).split(",")
+    if origin.strip()
+]
+vercel_frontend_origin = os.getenv("VERCEL_FRONTEND_ORIGIN")
+if vercel_frontend_origin and vercel_frontend_origin not in cors_origins:
+    cors_origins.append(vercel_frontend_origin)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.exception_handler(HTTPException)
 async def handle_http_exception(_: object, exc: HTTPException):
