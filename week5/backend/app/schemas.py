@@ -17,6 +17,11 @@ class NoteCreate(BaseModel):
     content: NonEmptyContent
 
 
+class NoteUpdate(BaseModel):
+    title: NonEmptyTitle
+    content: NonEmptyContent
+
+
 class NoteRead(BaseModel):
     id: int
     title: str
@@ -57,3 +62,8 @@ class PaginatedData(BaseModel, Generic[T]):
     total: int
     page: int
     page_size: int
+
+
+class DeleteResult(BaseModel):
+    deleted: Literal[True]
+    id: int

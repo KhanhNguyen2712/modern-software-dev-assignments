@@ -1,25 +1,87 @@
 async function fetchJSON(url, options) {
   const res = await fetch(url, options);
   if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const body = await res.json();
+  if (body.ok === false) throw new Error(body.error?.message || 'Request failed');
+  return body.data;
+}
+
+let notesState = [];
+let notesStatusMessage = '';
+
+function renderNotes() {
+  const list = document.getElementById('notes');
+  const status = document.getElementById('notes-status');
+  list.innerHTML = '';
+  status.textContent = notesStatusMessage;
+
+  for (const note of notesState) {
+    const li = document.createElement('li');
+    li.textContent = `${note.title}: ${note.content}`;
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Edit';
+    editBtn.onclick = async () => {
+      const nextTitle = window.prompt('Edit title', note.title);
+      if (nextTitle === null) return;
+      const nextContent = window.prompt('Edit content', note.content);
+      if (nextContent === null) return;
+
+      const previousState = [...notesState];
+      notesState = notesState.map((current) =>
+        current.id === note.id ? { ...current, title: nextTitle, content: nextContent } : current,
+      );
+      renderNotes();
+
+      try {
+        const updated = await fetchJSON(`/notes/${note.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: nextTitle, content: nextContent }),
+        });
+        notesState = notesState.map((current) => (current.id === note.id ? updated : current));
+        renderNotes();
+      } catch (error) {
+        notesState = previousState;
+        notesStatusMessage = `Edit failed: ${error.message}`;
+        renderNotes();
+      }
+    };
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.onclick = async () => {
+      const previousState = [...notesState];
+      notesState = notesState.filter((current) => current.id !== note.id);
+      renderNotes();
+
+      try {
+        await fetchJSON(`/notes/${note.id}`, { method: 'DELETE' });
+      } catch (error) {
+        notesState = previousState;
+        notesStatusMessage = `Delete failed: ${error.message}`;
+        renderNotes();
+      }
+    };
+
+    li.appendChild(editBtn);
+    li.appendChild(deleteBtn);
+    list.appendChild(li);
+  }
 }
 
 async function loadNotes() {
-  const list = document.getElementById('notes');
-  list.innerHTML = '';
-  const notes = await fetchJSON('/notes/');
-  for (const n of notes) {
-    const li = document.createElement('li');
-    li.textContent = `${n.title}: ${n.content}`;
-    list.appendChild(li);
-  }
+  const notesPage = await fetchJSON('/notes/');
+  notesState = notesPage.items;
+  notesStatusMessage = '';
+  renderNotes();
 }
 
 async function loadActions() {
   const list = document.getElementById('actions');
   list.innerHTML = '';
-  const items = await fetchJSON('/action-items/');
-  for (const a of items) {
+  const itemsPage = await fetchJSON('/action-items/');
+  for (const a of itemsPage.items) {
     const li = document.createElement('li');
     li.textContent = `${a.description} [${a.completed ? 'done' : 'open'}]`;
     if (!a.completed) {

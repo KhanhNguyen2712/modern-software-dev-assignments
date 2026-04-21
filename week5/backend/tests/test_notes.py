@@ -64,3 +64,38 @@ def test_notes_list_rejects_too_large_page_size(client):
     body = response.json()
     assert body["ok"] is False
     assert body["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_update_note_returns_updated_record(client):
+    created = client.post("/notes/", json={"title": "Draft", "content": "Body"}).json()["data"]
+
+    response = client.put(
+        f"/notes/{created['id']}",
+        json={"title": "Updated", "content": "Updated body"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["data"]["title"] == "Updated"
+    assert body["data"]["content"] == "Updated body"
+
+
+def test_delete_note_removes_record(client):
+    created = client.post("/notes/", json={"title": "Draft", "content": "Body"}).json()["data"]
+
+    response = client.delete(f"/notes/{created['id']}")
+
+    assert response.status_code == 200
+    assert response.json() == {"ok": True, "data": {"deleted": True, "id": created["id"]}}
+
+    missing = client.get(f"/notes/{created['id']}")
+    assert missing.status_code == 404
+
+
+def test_update_and_delete_note_return_not_found_when_missing(client):
+    update_response = client.put("/notes/999", json={"title": "Missing", "content": "Missing"})
+    delete_response = client.delete("/notes/999")
+
+    assert update_response.status_code == 404
+    assert delete_response.status_code == 404

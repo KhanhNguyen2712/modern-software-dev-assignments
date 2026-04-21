@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import Note
 from ..responses import success_response
-from ..schemas import NoteCreate, NoteRead, PaginatedData, SuccessEnvelope
+from ..schemas import DeleteResult, NoteCreate, NoteRead, NoteUpdate, PaginatedData, SuccessEnvelope
 
 router = APIRouter(prefix="/notes", tags=["notes"])
 
@@ -51,3 +51,28 @@ def get_note(note_id: int, db: Session = Depends(get_db)):
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
     return success_response(NoteRead.model_validate(note).model_dump(mode="json"))
+
+
+@router.put("/{note_id}", response_model=SuccessEnvelope[NoteRead])
+def update_note(note_id: int, payload: NoteUpdate, db: Session = Depends(get_db)):
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    note.title = payload.title
+    note.content = payload.content
+    db.add(note)
+    db.flush()
+    db.refresh(note)
+    return success_response(NoteRead.model_validate(note).model_dump(mode="json"))
+
+
+@router.delete("/{note_id}", response_model=SuccessEnvelope[DeleteResult])
+def delete_note(note_id: int, db: Session = Depends(get_db)):
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    db.delete(note)
+    db.flush()
+    return success_response({"deleted": True, "id": note_id})
