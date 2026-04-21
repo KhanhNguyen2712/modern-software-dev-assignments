@@ -1,5 +1,7 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
@@ -32,17 +34,32 @@ def create_note(payload: NoteCreate, db: Session = Depends(get_db)):
     return success_response(NoteRead.model_validate(note).model_dump(mode="json"), status_code=201)
 
 
-@router.get("/search/", response_model=SuccessEnvelope[list[NoteRead]])
-def search_notes(q: str | None = None, db: Session = Depends(get_db)):
-    if not q:
-        rows = db.execute(select(Note)).scalars().all()
+@router.get("/search", response_model=SuccessEnvelope[PaginatedData[NoteRead]])
+def search_notes(
+    q: str | None = None,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+    sort: Literal["created_desc", "title_asc"] = "created_desc",
+    db: Session = Depends(get_db),
+):
+    base_query = select(Note)
+    count_query = select(func.count()).select_from(Note)
+
+    if q:
+        filter_clause = or_(Note.title.ilike(f"%{q}%"), Note.content.ilike(f"%{q}%"))
+        base_query = base_query.where(filter_clause)
+        count_query = count_query.where(filter_clause)
+
+    if sort == "title_asc":
+        base_query = base_query.order_by(Note.title.asc(), Note.id.asc())
     else:
-        rows = (
-            db.execute(select(Note).where((Note.title.contains(q)) | (Note.content.contains(q))))
-            .scalars()
-            .all()
-        )
-    return success_response([NoteRead.model_validate(row).model_dump(mode="json") for row in rows])
+        base_query = base_query.order_by(desc(Note.id))
+
+    total = db.scalar(count_query) or 0
+    offset = (page - 1) * page_size
+    rows = db.execute(base_query.offset(offset).limit(page_size)).scalars().all()
+    items = [NoteRead.model_validate(row).model_dump(mode="json") for row in rows]
+    return success_response({"items": items, "total": total, "page": page, "page_size": page_size})
 
 
 @router.get("/{note_id}", response_model=SuccessEnvelope[NoteRead])

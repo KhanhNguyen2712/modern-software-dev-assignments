@@ -13,12 +13,25 @@
       <section>
         <h2>Notes</h2>
         <p id="notes-status" aria-live="polite"></p>
+        <form id="note-search-form">
+          <input id="note-search" placeholder="Search notes" />
+          <select id="note-sort">
+            <option value="created_desc">Newest first</option>
+            <option value="title_asc">Title A-Z</option>
+          </select>
+          <button type="submit">Search</button>
+        </form>
+        <p id="notes-count"></p>
         <form id="note-form">
           <input id="note-title" placeholder="Title" required />
           <input id="note-content" placeholder="Content" required />
           <button type="submit">Add</button>
         </form>
         <ul id="notes"></ul>
+        <div>
+          <button id="notes-prev" type="button">Prev</button>
+          <button id="notes-next" type="button">Next</button>
+        </div>
       </section>
 
       <section>

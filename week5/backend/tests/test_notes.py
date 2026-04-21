@@ -99,3 +99,47 @@ def test_update_and_delete_note_return_not_found_when_missing(client):
 
     assert update_response.status_code == 404
     assert delete_response.status_code == 404
+
+
+def test_search_notes_supports_case_insensitive_matching_sorting_and_pagination(client):
+    client.post("/notes/", json={"title": "Zebra", "content": "alpha mention"})
+    client.post("/notes/", json={"title": "Alpha", "content": "second"})
+    client.post("/notes/", json={"title": "Middle", "content": "ALPHA again"})
+
+    first_page = client.get(
+        "/notes/search",
+        params={"q": "alpha", "sort": "title_asc", "page": 1, "page_size": 2},
+    )
+
+    assert first_page.status_code == 200
+    body = first_page.json()
+    assert body["ok"] is True
+    assert body["data"]["total"] == 3
+    assert [item["title"] for item in body["data"]["items"]] == ["Alpha", "Middle"]
+
+    second_page = client.get(
+        "/notes/search",
+        params={"q": "alpha", "sort": "title_asc", "page": 2, "page_size": 2},
+    )
+    assert second_page.status_code == 200
+    assert [item["title"] for item in second_page.json()["data"]["items"]] == ["Zebra"]
+
+
+def test_search_notes_supports_created_desc_sort(client):
+    first = client.post("/notes/", json={"title": "First", "content": "entry"}).json()["data"]
+    second = client.post("/notes/", json={"title": "Second", "content": "entry"}).json()["data"]
+
+    response = client.get("/notes/search", params={"sort": "created_desc"})
+
+    assert response.status_code == 200
+    items = response.json()["data"]["items"]
+    assert [item["id"] for item in items[:2]] == [second["id"], first["id"]]
+
+
+def test_search_notes_rejects_invalid_sort_value(client):
+    response = client.get("/notes/search", params={"sort": "bad_sort"})
+
+    assert response.status_code == 400
+    body = response.json()
+    assert body["ok"] is False
+    assert body["error"]["code"] == "VALIDATION_ERROR"

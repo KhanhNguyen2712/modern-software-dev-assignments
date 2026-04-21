@@ -8,14 +8,21 @@ async function fetchJSON(url, options) {
 
 let notesState = [];
 let notesStatusMessage = '';
+let notesPage = 1;
+let notesPageSize = 5;
+let notesTotal = 0;
+let noteSearchQuery = '';
+let noteSort = 'created_desc';
 let actionFilter = null;
 let selectedActionIds = new Set();
 
 function renderNotes() {
   const list = document.getElementById('notes');
   const status = document.getElementById('notes-status');
+  const count = document.getElementById('notes-count');
   list.innerHTML = '';
   status.textContent = notesStatusMessage;
+  count.textContent = `Showing ${notesState.length} of ${notesTotal} result(s)`;
 
   for (const note of notesState) {
     const li = document.createElement('li');
@@ -73,8 +80,17 @@ function renderNotes() {
 }
 
 async function loadNotes() {
-  const notesPage = await fetchJSON('/notes/');
-  notesState = notesPage.items;
+  const url = new URL('/notes/search', window.location.origin);
+  if (noteSearchQuery) {
+    url.searchParams.set('q', noteSearchQuery);
+  }
+  url.searchParams.set('page', String(notesPage));
+  url.searchParams.set('page_size', String(notesPageSize));
+  url.searchParams.set('sort', noteSort);
+
+  const pageData = await fetchJSON(url.pathname + url.search);
+  notesState = pageData.items;
+  notesTotal = pageData.total;
   notesStatusMessage = '';
   renderNotes();
 }
@@ -129,8 +145,29 @@ window.addEventListener('DOMContentLoaded', () => {
       body: JSON.stringify({ title, content }),
     });
     e.target.reset();
+    notesPage = 1;
     loadNotes();
   });
+
+  document.getElementById('note-search-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    noteSearchQuery = document.getElementById('note-search').value.trim();
+    noteSort = document.getElementById('note-sort').value;
+    notesPage = 1;
+    await loadNotes();
+  });
+
+  document.getElementById('notes-prev').onclick = async () => {
+    if (notesPage === 1) return;
+    notesPage -= 1;
+    await loadNotes();
+  };
+
+  document.getElementById('notes-next').onclick = async () => {
+    if (notesPage * notesPageSize >= notesTotal) return;
+    notesPage += 1;
+    await loadNotes();
+  };
 
   document.getElementById('action-form').addEventListener('submit', async (e) => {
     e.preventDefault();
