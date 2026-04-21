@@ -1,6 +1,16 @@
-.PHONY: run test format lint seed
+.PHONY: run test format lint seed web-install web-dev web-build
+
+web-install:
+	cd frontend && npm install
+
+web-dev:
+	cd frontend && npm run dev
+
+web-build:
+	cd frontend && npm run build
 
 run:
+	$(MAKE) web-build
 	PYTHONPATH=. uvicorn backend.app.main:app --reload --host $${HOST:-127.0.0.1} --port $${PORT:-8000}
 
 test:

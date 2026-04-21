@@ -1,60 +1,12 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Modern Software Dev Starter</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Week 5 Workspace</title>
   </head>
   <body>
-    <main>
-      <h1>Modern Software Dev Starter</h1>
-
-      <section>
-        <h2>Notes</h2>
-        <p id="notes-status" aria-live="polite"></p>
-        <div id="tag-filters"></div>
-        <form id="note-search-form">
-          <input id="note-search" placeholder="Search notes" />
-          <select id="note-sort">
-            <option value="created_desc">Newest first</option>
-            <option value="title_asc">Title A-Z</option>
-          </select>
-          <button type="submit">Search</button>
-        </form>
-        <p id="notes-count"></p>
-        <form id="note-form">
-          <input id="note-title" placeholder="Title" required />
-          <input id="note-content" placeholder="Content" required />
-          <button type="submit">Add</button>
-        </form>
-        <ul id="notes"></ul>
-        <div>
-          <button id="notes-prev" type="button">Prev</button>
-          <button id="notes-next" type="button">Next</button>
-        </div>
-        <form id="tag-form">
-          <input id="tag-name" placeholder="Create tag" />
-          <button type="submit">Add Tag</button>
-        </form>
-      </section>
-
-      <section>
-        <h2>Action Items</h2>
-        <div>
-          <button id="actions-filter-all" type="button">All</button>
-          <button id="actions-filter-open" type="button">Open</button>
-          <button id="actions-filter-done" type="button">Done</button>
-          <button id="actions-bulk-complete" type="button">Complete Selected</button>
-        </div>
-        <form id="action-form">
-          <input id="action-desc" placeholder="Description" required />
-          <button type="submit">Add</button>
-        </form>
-        <ul id="actions"></ul>
-      </section>
-    </main>
-
-    <script src="/static/app.js"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

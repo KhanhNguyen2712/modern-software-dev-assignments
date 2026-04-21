@@ -17,13 +17,14 @@ from .routers import tags as tags_router
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     Path("data").mkdir(parents=True, exist_ok=True)
+    Path("frontend/dist").mkdir(parents=True, exist_ok=True)
     Base.metadata.create_all(bind=engine)
     apply_seed_if_needed()
     yield
 
 
 app = FastAPI(title="Modern Software Dev Starter (Week 5)", lifespan=lifespan)
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+app.mount("/assets", StaticFiles(directory="frontend/dist/assets", check_dir=False), name="assets")
 
 @app.exception_handler(HTTPException)
 async def handle_http_exception(_: object, exc: HTTPException):
@@ -45,7 +46,7 @@ async def handle_unexpected_error(_: object, exc: Exception):
 
 @app.get("/")
 async def root() -> FileResponse:
-    return FileResponse("frontend/index.html")
+    return FileResponse("frontend/dist/index.html")
 
 
 # Routers
