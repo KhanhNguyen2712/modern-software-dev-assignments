@@ -1,8 +1,340 @@
-body{font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;margin:0;padding:0;background:#fafafa;color:#111}
-main{max-width:900px;margin:2rem auto;padding:0 1rem}
-h1{font-size:1.8rem}
-section{background:#fff;border:1px solid #eee;border-radius:8px;padding:1rem;margin:1rem 0}
-form{display:flex;gap:.5rem;margin-bottom:.5rem}
-input{flex:1;padding:.5rem;border:1px solid #ccc;border-radius:4px}
-button{padding:.5rem .8rem;border:1px solid #ccc;border-radius:4px;background:#f5f5f5;cursor:pointer}
-ul{list-style:disc;padding-left:1.25rem}
+:root {
+  color-scheme: light;
+  --bg: #f5efe4;
+  --surface: #fffaf2;
+  --surface-strong: #fff;
+  --border: #dbcdb4;
+  --text: #1f1a14;
+  --muted: #6d6257;
+  --accent: #c56a2d;
+  --accent-strong: #8f4311;
+  --success: #2e7d5b;
+  --error: #b4473e;
+  --shadow: 0 18px 45px rgba(74, 51, 20, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(197, 106, 45, 0.18), transparent 28%),
+    linear-gradient(180deg, #fbf6ea 0%, var(--bg) 100%);
+  color: var(--text);
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--text);
+  cursor: pointer;
+  padding: 0.7rem 1rem;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: var(--accent);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button.accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff7ef;
+}
+
+button.ghost {
+  background: transparent;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 0.8rem 0.95rem;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--text);
+}
+
+textarea {
+  resize: vertical;
+}
+
+.app-shell {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 3rem;
+}
+
+.hero {
+  margin-bottom: 1.25rem;
+  padding: 1.5rem 1.6rem;
+}
+
+.eyebrow,
+.section-kicker {
+  margin: 0 0 0.35rem;
+  color: var(--accent-strong);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero h1,
+.section-header h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.02em;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 3vw, 3.1rem);
+}
+
+.hero-copy {
+  max-width: 54rem;
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.status {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.status[data-tone="success"] {
+  border-color: rgba(46, 125, 91, 0.35);
+  color: var(--success);
+}
+
+.status[data-tone="error"] {
+  border-color: rgba(180, 71, 62, 0.35);
+  color: var(--error);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.panel {
+  padding: 1.35rem;
+  border: 1px solid rgba(219, 205, 180, 0.92);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255, 250, 242, 0.98), rgba(255, 255, 255, 0.92));
+  box-shadow: var(--shadow);
+}
+
+.section-header,
+.toolbar,
+.toolbar-group,
+.row,
+.inline-form,
+.note-meta,
+.note-actions,
+.action-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.section-header {
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.summary {
+  margin: 0;
+  color: var(--muted);
+  text-align: right;
+}
+
+.stack-form,
+.inline-form {
+  margin-bottom: 1rem;
+}
+
+.stack-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.row {
+  align-items: stretch;
+}
+
+.row input {
+  flex: 1;
+}
+
+.toolbar {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.toolbar-group {
+  flex-wrap: wrap;
+}
+
+.toolbar-group-end {
+  justify-content: flex-end;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.segmented button.active {
+  background: rgba(197, 106, 45, 0.14);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.card-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.card-item {
+  border: 1px solid rgba(219, 205, 180, 0.92);
+  border-radius: 22px;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.card-item.pending {
+  opacity: 0.72;
+}
+
+.card-item h3,
+.card-item p {
+  margin: 0;
+}
+
+.note-copy,
+.empty-state {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.note-copy {
+  margin: 0.8rem 0;
+  white-space: pre-wrap;
+}
+
+.note-meta {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.note-actions {
+  justify-content: flex-end;
+}
+
+.action-row {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.action-main {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.action-main label {
+  display: inline-flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.badge {
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(46, 125, 91, 0.12);
+  color: var(--success);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.empty-state {
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 18px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    width: min(100% - 1rem, 100%);
+    padding-top: 1rem;
+  }
+
+  .panel,
+  .hero {
+    padding: 1rem;
+  }
+
+  .row,
+  .toolbar,
+  .toolbar-group,
+  .inline-form,
+  .section-header,
+  .action-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .summary,
+  .note-actions {
+    text-align: left;
+    justify-content: flex-start;
+  }
+}

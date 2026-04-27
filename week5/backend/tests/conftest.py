@@ -32,8 +32,13 @@ def client() -> Generator[TestClient, None, None]:
             session.close()
 
     app.dependency_overrides[get_db] = override_get_db
+    startup_handlers = list(app.router.on_startup)
+    app.router.on_startup.clear()
 
     with TestClient(app) as c:
         yield c
 
+    app.router.on_startup[:] = startup_handlers
+    app.dependency_overrides.clear()
+    engine.dispose()
     os.unlink(db_path)

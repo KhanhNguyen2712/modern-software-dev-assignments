@@ -7,27 +7,93 @@
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <main>
-      <h1>Modern Software Dev Starter</h1>
+    <main class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">Week 5 playground</p>
+        <h1>Notes and action items workspace</h1>
+        <p class="hero-copy">
+          Search, edit, delete, and paginate notes while keeping action items filtered and
+          batch-completable.
+        </p>
+      </header>
 
-      <section>
-        <h2>Notes</h2>
-        <form id="note-form">
-          <input id="note-title" placeholder="Title" required />
-          <input id="note-content" placeholder="Content" required />
-          <button type="submit">Add</button>
-        </form>
-        <ul id="notes"></ul>
-      </section>
+      <p id="status-message" class="status" hidden></p>
 
-      <section>
-        <h2>Action Items</h2>
-        <form id="action-form">
-          <input id="action-desc" placeholder="Description" required />
-          <button type="submit">Add</button>
-        </form>
-        <ul id="actions"></ul>
-      </section>
+      <div class="layout">
+        <section class="panel">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">Task 2 + Task 3</p>
+              <h2>Notes</h2>
+            </div>
+            <p id="notes-summary" class="summary">0 results</p>
+          </div>
+
+          <form id="note-form" class="stack-form">
+            <div class="row">
+              <input id="note-title" placeholder="Note title" required maxlength="200" />
+              <button id="note-submit" type="submit">Add note</button>
+              <button id="note-cancel" type="button" class="ghost" hidden>Cancel</button>
+            </div>
+            <textarea
+              id="note-content"
+              placeholder="Write the note content here"
+              required
+              maxlength="5000"
+              rows="4"
+            ></textarea>
+          </form>
+
+          <div class="toolbar">
+            <form id="note-search-form" class="toolbar-group">
+              <input id="note-search" placeholder="Search title or content" />
+              <button type="submit">Search</button>
+            </form>
+
+            <div class="toolbar-group toolbar-group-end">
+              <label for="note-sort">Sort</label>
+              <select id="note-sort">
+                <option value="created_desc">Newest first</option>
+                <option value="created_asc">Oldest first</option>
+                <option value="title_asc">Title A-Z</option>
+                <option value="title_desc">Title Z-A</option>
+              </select>
+              <div class="pager">
+                <button id="notes-prev" type="button" class="ghost">Prev</button>
+                <span id="notes-page-label">Page 1 of 1</span>
+                <button id="notes-next" type="button" class="ghost">Next</button>
+              </div>
+            </div>
+          </div>
+
+          <ul id="notes" class="card-list"></ul>
+        </section>
+
+        <section class="panel">
+          <div class="section-header">
+            <div>
+              <p class="section-kicker">Task 4</p>
+              <h2>Action items</h2>
+            </div>
+            <button id="bulk-complete" type="button" class="accent" disabled>
+              Complete selected
+            </button>
+          </div>
+
+          <form id="action-form" class="inline-form">
+            <input id="action-desc" placeholder="New action item" required maxlength="500" />
+            <button type="submit">Add item</button>
+          </form>
+
+          <div id="action-filters" class="segmented">
+            <button type="button" data-filter="all" class="active">All</button>
+            <button type="button" data-filter="open">Open</button>
+            <button type="button" data-filter="done">Completed</button>
+          </div>
+
+          <ul id="actions" class="card-list"></ul>
+        </section>
+      </div>
     </main>
 
     <script src="/static/app.js"></script>
