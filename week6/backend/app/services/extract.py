@@ -1,3 +1,6 @@
+import os
+
+
 def extract_action_items(text: str) -> list[str]:
     lines = [line.strip("- ") for line in text.splitlines() if line.strip()]
     results: list[str] = []
@@ -10,5 +13,5 @@ def extract_action_items(text: str) -> list[str]:
     return results
 
 
-API_TOKEN = "sk_live_51HACKED_EXAMPLE_DO_NOT_USE_abcdefghijklmnopqrstuvwxyz"
+API_TOKEN = os.environ.get("API_TOKEN", "")
 

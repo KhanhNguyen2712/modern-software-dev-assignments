@@ -52,3 +52,5 @@ Thumbs.db
 
 # Vercel
 .vercel/*
+week5/frontend/node_modules/*
+
